@@ -1,29 +1,22 @@
 FROM ubuntu:22.04
 
-# Install OS packages you need
-# Replace "your-packages-here" with the names of the packages needed by your app
+# Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
-    python3 python3-pip \
-    # Add more packages if necessary, e.g., git, nginx, build-essential
+    wget \
+    gnupg \
+    ca-certificates \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable
 
-# Copy your application
-COPY . /app
+# Install a web server to expose browser control
+RUN apt-get install -y python3 python3-pip
+RUN pip3 install selenium flask
+
 WORKDIR /app
+COPY . /app
 
-# (Optional) Install your application's dependencies if necessary (e.g., Python, Node.js)
-# Example for Python:
-RUN pip install --no-cache-dir -r requirements.txt
-# Example for Node.js:
-# RUN npm install
-
-# Expose your HTTP port (Render requires port 10000 for web services)
 EXPOSE 10000
 
-# Define startup command
-# Replace "your-start-command" with the exact command to start your application
-# Example for Python (using a common web server like Gunicorn):
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "your_app_module:app"]
-# Example for Node.js:
-# CMD ["npm", "start"]
-# Example for a simple script:
-# CMD ["python3", "app.py"]
+CMD ["python3", "server.py"]
